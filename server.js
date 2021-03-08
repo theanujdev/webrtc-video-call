@@ -11,4 +11,17 @@ app.get("/:room", (req, res) => {
   res.render("room", { roomID: req.params.room });
 });
 
-app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
+const server = app.listen(PORT, () =>
+  console.log(`Listening on http://localhost:${PORT}`)
+);
+
+const io = require("socket.io")(server);
+io.on("connection", (socket) => {
+  socket.on("join-room", (roomID, userID) => {
+    socket.join(roomID);
+    socket.to(roomID).broadcast.emit("user-connected", userID);
+    socket.on("disconnect", () => {
+      socket.to(roomID).broadcast.emit("user-disconnected", userID);
+    });
+  });
+});
